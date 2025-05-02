@@ -53,34 +53,10 @@ Before we go deeper, we should check if this data makes sense. The following fig
 
 """)
 
-df = merged_df_trim_filter01.copy()
 
-#excluding small zips
-excluded_zips = [27312, 27515]
-df = df[~df["Zip"].isin(excluded_zips)]
-
-# Calculate average appraisal value per ZIP
-zip_avg = (
-    df.groupby("Zip")["TotalAppraisedValue"]
-    .median()
-    .reset_index()
-    .rename(columns={"Zip": "ZIP", "TotalAppraisedValue": "AvgAppraisalValue"})
-)
-zip_avg["ZIP"] = zip_avg["ZIP"].astype('int')
-
-# Load NC ZIP GeoJSON (lightweight)
-geojson_url = "https://raw.githubusercontent.com/OpenDataDE/State-zip-code-GeoJSON/master/nc_north_carolina_zip_codes_geo.min.json"
-zip_shapes = gpd.read_file(geojson_url)
-zip_shapes["ZIP"] = zip_shapes["ZCTA5CE10"].astype('int')
-
-# Merge your data with ZIP geometries
-zip_map = zip_shapes.merge(zip_avg, on="ZIP", how="right")
-zip_map = zip_map.dropna(subset=["geometry", "AvgAppraisalValue"])
-
-# Load the county shapefile
-county_shapefile = 'tl_2023_us_county.shp'
-
-counties = gpd.read_file(county_shapefile)
+# Load data
+orange = pd.read_parquet('orange.parquet')
+zip_map = pd.read_parquet('zip_map.parquet')
 
 
 # 1. Ensure ZIP GeoDataFrame has projected CRS
