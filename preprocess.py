@@ -1,6 +1,7 @@
 # pre processing property tax data
 # preprocess.py
 import pandas as pd
+import geopandas as gpd
 import numpy as np
 
 
@@ -69,3 +70,46 @@ merged_df_trim_filter01
 
 # Save to compressed, fast format
 merged_df_trim_filter01.to_parquet('processed_data.parquet')  
+
+
+
+
+#Creating second data set for the county visual
+# Your appraisal DataFrame
+df = merged_df_trim_filter01.copy()
+
+#excluding small zips
+excluded_zips = [27312, 27515]
+df = df[~df["Zip"].isin(excluded_zips)]
+
+# Calculate average appraisal value per ZIP
+zip_avg = (
+    df.groupby("Zip")["TotalAppraisedValue"]
+    .median()
+    .reset_index()
+    .rename(columns={"Zip": "ZIP", "TotalAppraisedValue": "AvgAppraisalValue"})
+)
+zip_avg["ZIP"] = zip_avg["ZIP"].astype('int')
+
+
+# Load NC ZIP GeoJSON (lightweight)
+geojson_url = "https://raw.githubusercontent.com/OpenDataDE/State-zip-code-GeoJSON/master/nc_north_carolina_zip_codes_geo.min.json"
+zip_shapes = gpd.read_file(geojson_url)
+zip_shapes["ZIP"] = zip_shapes["ZCTA5CE10"].astype('int')
+
+# Merge your data with ZIP geometries
+zip_map = zip_shapes.merge(zip_avg, on="ZIP", how="right")
+zip_map = zip_map.dropna(subset=["geometry", "AvgAppraisalValue"])
+
+# Load the county shapefile
+county_shapefile = '/Users/isaacdinner/Documents/orange_gis/tl_2023_us_county.shp'
+#df_2025 = pd.read_excel('/Users/isaacdinner/Documents/orange_gis/2025 Real Property Data Extract - Detailed - PRELIMINARY - 20250324.xlsx', engine='openpyxl')
+
+counties = gpd.read_file(county_shapefile)
+
+# Filter to Orange County, NC (state FIPS: 37, county FIPS: 135)
+orange = counties[(counties["STATEFP"] == "37") & (counties["COUNTYFP"] == "135")]
+
+
+zip_map.to_parquet('zip_map.parquet')  
+orange.to_parquet('orange.parquet')  
