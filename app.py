@@ -55,8 +55,8 @@ Before we go deeper, we should check if this data makes sense. The following fig
 
 
 # Load data
-orange = pd.read_parquet('orange.parquet')
-zip_map = pd.read_parquet('zip_map.parquet')
+orange = gpd.read_parquet('orange.parquet')
+zip_map = gpd.read_parquet('zip_map.parquet')
 
 
 # 1. Ensure ZIP GeoDataFrame has projected CRS

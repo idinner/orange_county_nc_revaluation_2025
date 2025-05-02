@@ -111,5 +111,6 @@ counties = gpd.read_file(county_shapefile)
 orange = counties[(counties["STATEFP"] == "37") & (counties["COUNTYFP"] == "135")]
 
 
-zip_map.to_parquet('zip_map.parquet')  
-orange.to_parquet('orange.parquet')  
+zip_map.to_parquet('zip_map.parquet', index=False)
+orange.to_parquet('orange.parquet', index=False)
+
