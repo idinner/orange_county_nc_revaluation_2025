@@ -78,7 +78,7 @@ zip_map = zip_shapes.merge(zip_avg, on="ZIP", how="right")
 zip_map = zip_map.dropna(subset=["geometry", "AvgAppraisalValue"])
 
 # Load the county shapefile
-county_shapefile = '/Users/isaacdinner/Documents/orange_gis/tl_2023_us_county.shp'
+county_shapefile = 'tl_2023_us_county.shp'
 
 counties = gpd.read_file(county_shapefile)
 
