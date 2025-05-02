@@ -1,5 +1,4 @@
 # app.py
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -45,9 +44,88 @@ No! For simplicity, and because I wanted to focus on housing, I trimmed out a fe
 
 In sum, this leaves us with around 40K property locations in Orange County, down from around 62K. I should note that this data also includes a lot of other quirks which I don't fully understand, nor will likely ever understand. As the 2025 data is also preliminary, it is also likely to change and get cleaner over time.
 
-
+Before we go deeper, we should check if this data makes sense. The following figure shows the median appraised value for each zip code in Orange County. Two zip codes had under 10 properties, so I filtered them out (27312 and 27515). As expected, the locations that are closer to the town center of chapel hill have higher valuations:
 
 """)
+
+df = merged_df_trim_filter01.copy()
+
+#excluding small zips
+excluded_zips = [27312, 27515]
+df = df[~df["Zip"].isin(excluded_zips)]
+
+# Calculate average appraisal value per ZIP
+zip_avg = (
+    df.groupby("Zip")["TotalAppraisedValue"]
+    .median()
+    .reset_index()
+    .rename(columns={"Zip": "ZIP", "TotalAppraisedValue": "AvgAppraisalValue"})
+)
+zip_avg["ZIP"] = zip_avg["ZIP"].astype('int')
+
+# Load NC ZIP GeoJSON (lightweight)
+geojson_url = "https://raw.githubusercontent.com/OpenDataDE/State-zip-code-GeoJSON/master/nc_north_carolina_zip_codes_geo.min.json"
+zip_shapes = gpd.read_file(geojson_url)
+zip_shapes["ZIP"] = zip_shapes["ZCTA5CE10"].astype('int')
+
+# Merge your data with ZIP geometries
+zip_map = zip_shapes.merge(zip_avg, on="ZIP", how="right")
+zip_map = zip_map.dropna(subset=["geometry", "AvgAppraisalValue"])
+
+# Load the county shapefile
+county_shapefile = '/Users/isaacdinner/Documents/orange_gis/tl_2023_us_county.shp'
+
+counties = gpd.read_file(county_shapefile)
+
+
+# 1. Ensure ZIP GeoDataFrame has projected CRS
+zip_map_proj = zip_map.to_crs(epsg=3857)  # shading layer with value
+zip_boundaries = zip_map_proj.copy()
+zip_boundaries["geometry"] = zip_boundaries["geometry"].boundary  # outlines only
+
+# 2. Reproject Orange County boundary
+orange_proj = orange.to_crs(epsg=3857)
+
+# 3. Plot
+fig, ax = plt.subplots(figsize=(10, 10))
+
+# Fill ZIPs with shading by appraisal value
+zip_map_proj.plot(
+    column="AvgAppraisalValue",
+    cmap="OrRd",
+    linewidth=0,
+    ax=ax,
+    legend=False,
+    legend_kwds={"label": "Avg Appraised Value", "shrink": 0.6}
+)
+
+# ZIP code boundary lines
+zip_boundaries.plot(ax=ax, linewidth=1, edgecolor="black")
+
+# County boundary
+orange_proj.boundary.plot(ax=ax, linewidth=2, edgecolor="blue")
+
+# ZIP code labels
+for idx, row in zip_map_proj.iterrows():
+    if pd.notnull(row["AvgAppraisalValue"]) and row.geometry.centroid.is_valid:
+        centroid = row.geometry.centroid
+        label = f"{row['ZIP']}\n${row['AvgAppraisalValue']:,.0f}"
+        ax.text(
+            centroid.x,
+            centroid.y,
+            label,
+            fontsize=8,
+            ha="center",
+            va="center",
+            color="black"
+        )
+
+# Clean layout
+ax.set_title("Median Appraised Value by ZIP in Orange County, NC", fontsize=14)
+ax.axis("off")
+plt.tight_layout()
+plt.show()
+
 
 st.markdown("---")
 
