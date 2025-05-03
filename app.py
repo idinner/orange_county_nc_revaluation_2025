@@ -105,7 +105,7 @@ for idx, row in zip_map_proj.iterrows():
 ax.set_title("Median Appraised Value by ZIP in Orange County, NC", fontsize=14)
 ax.axis("off")
 plt.tight_layout()
-plt.show()
+st.pyplot(fig)
 
 
 st.markdown("---")
