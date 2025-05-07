@@ -19,44 +19,44 @@ merged_df_trim_filter01 = load_data()
 
 
 # Title
-st.title('🏡 Orange County NC Property Tax Value Distribution Exploration')
+st.title('🏡 Exploration of the Property Tax Revaluation in Orange County NC')
 
 st.markdown("""
-Recently, where I live in NC, there has been a lot of talk about property taxes. [INSERT LINKS]
+Recently, where I live in NC, there has been a lot of <a href="https://www.newsobserver.com/news/local/counties/orange-county/article300487814.html" target="_blank">talk about changes in the appraised value of homes that are used for calculating property taxes</a>.
 
-I thought it would be interesting to see different property values have evolved from 2024 to 2025, and how they compare to each other in my county (Orange County NC). So, I used the publicly available Orange County GIS data to get the value of my property and compare it to the rest of the county.
+I thought it would be interesting to see how residential property values have evolved from 2024 to 2025, and how they compare to each other in my county (Orange County NC). So, I used the publicly available Orange County GIS data to get the value of each property and compare them to others in the rest of the county.
 
-Below I'll provide some data that I found interesting, and at the bottom you can see how your property compares to others in Orange County.
-
-""")
+Below I'll provide some data that I found interesting, and at the bottom you can see how changes in property values compares to general distribution found in Orange County.
+""", unsafe_allow_html=True)
 
 st.markdown("---")
 
 st.markdown("""
-First, some basics on what data is included and what is not included.
+First, some basics on the data itself, and what is and is not included.
 
 **Where is the data sourced?**
 
-Nicely, Orange County Publishes all of this data on their website (https://www.orangecountync.gov/2057/Download-GIS-Data). Full data for 2024 and previous years is on the site, but they were kind enough to supply preliminary 2025 data by email.
+Nicely, Orange County Publishes all of this data on their <a href="https://www.orangecountync.gov/2057/Download-GIS-Data" target="_blank">website</a>. Full data for 2024 and previous years is on the site, but they were kind enough to supply preliminary 2025 data by email.
 
 **Does this include all properties in Orange County NC?**
 
-No! For simplicity, and because I wanted to focus on housing, I trimmed out a few types of properties:
+No! For simplicity, and because I wanted to focus on residential housing, I trimmed out a few types of properties:
 
-1. **Non Zero Tax Exemptions** This primarily includes out schools and other tax exempt locations.
+1. **Non Zero Tax Exemptions** This primarily includes out schools and similar tax exempt locations.
 2. **Land only plots** There is a LOT of land in Chapel Hill which doesn't have any buildings. It's been trimmed out.
 3. **Duplicates:** I wasn't sure exactly how to handle this, but there are more than a few duplicates Parcels in the data which are mostly similar. It's a relatively small amount, but only one was chosen.
 
-In sum, this leaves us with around 40K property locations in Orange County, down from around 62K. I should note that this data also includes a lot of other quirks which I don't fully understand, nor will likely ever understand. As the 2025 data is also preliminary, it is also likely to change and get cleaner over time.
+In sum, this leaves us with around 40K property locations in Orange County, down from around 62K. I should note that this data also includes a lot of other quirks which I don't fully understand, nor will likely ever understand. As the 2025 data is also *preliminary*, it is also likely to change and get cleaner over time.
 
-Before we go deeper, we should check if this data makes sense. The following figure shows the median appraised value for each zip code in Orange County. Two zip codes had under 10 properties, so I filtered them out (27312 and 27515). As expected, the locations that are closer to the town center of chapel hill have higher valuations:
+Before we go deeper, we should check if this data makes sense. The following figure shows the median appraised value for each zip code in Orange County. Two zip codes had under 10 properties, so I filtered them out (27312 and 27515). As expected, the locations that are closer to the town center of chapel hill have higher valuations (e.g. 27514):
 
-""")
+""", unsafe_allow_html=True)
 
 
 # Load data
 orange = gpd.read_parquet('orange.parquet')
 zip_map = gpd.read_parquet('zip_map.parquet')
+zip_map["AppraisalValueChange"] = zip_map["AvgAppraisalValue"] / zip_map["AvgAppraisalValue_2024"] - 1
 
 
 # 1. Ensure ZIP GeoDataFrame has projected CRS
@@ -68,7 +68,7 @@ zip_boundaries["geometry"] = zip_boundaries["geometry"].boundary  # outlines onl
 orange_proj = orange.to_crs(epsg=3857)
 
 # 3. Plot
-fig, ax = plt.subplots(figsize=(10, 10))
+fig, ax = plt.subplots(figsize=(7,10))
 
 # Fill ZIPs with shading by appraisal value
 zip_map_proj.plot(
@@ -111,43 +111,171 @@ st.pyplot(fig)
 st.markdown("---")
 
 st.markdown("""
-**Next, have property valuations really increased in the county, and if so, by how much?**
+**Next, does the data show that property valuations have really increased in the county, and if so, by how much?**
 
-There is no question that property values have increased. In sum, property values have increased by around 55% in 2025. However, there is also a lot of variation. While almost no properties had lower value valuations, there were a rather larger number of properties that actually had valuations increase 2X, 5X and a few even by 10X!
+Yes. For this set of properties, appraised values increased by around 58% in 2025. However, there is also a lot of variation (see figures below). While almost no properties had lower value valuations, there were a rather larger number of properties that actually had valuations increase 2X, 5X and a few even by 10X.
 
-The below histogram gives a quick visual of the valuation change from 2024 to 2025. The mode is 55% and the median is XXX, and there is clearly a long tail. Why? that's not clear. Some of these could be data errors, but it's mostly likely changes due to additions and other hyper locale factors.
+The table below shows a quick snapshot of the valuation change from 2024 to 2025.
 
 """)
-# Assuming `merged_df_trim_filter01` is already loaded with relevant columns
-selected = merged_df_trim_filter01[[
-    'TotalAppraisedValue_percent',
-    'TotalAppraisedValue',
-]]
 
-# Create summary statistics table
-summary = selected.agg([
+
+
+# Select and summarize
+columns_to_summarize = ['TotalAppraisedValue_percent', 'TotalAppraisedValue']
+selected_data = merged_df_trim_filter01[columns_to_summarize]
+
+summary_stats = selected_data.agg([
     'mean',
     lambda x: x.quantile(0.25),
     'median',
     lambda x: x.quantile(0.75)
 ])
 
-# Rename index for clarity
-summary.index = ['Mean', '25th Percentile','Median', '75th Percentile']
+# Rename and transpose
+summary_stats.index = ['Mean', '25th Percentile', 'Median', '75th Percentile']
+summary_stats = summary_stats.transpose()
 
-# Transpose and round for display
-summary = summary.transpose().round(3)
+# Format values
+#summary_stats.loc['TotalAppraisedValue_percent'] =(summary_stats.loc['TotalAppraisedValue_percent']-1).round(2)
+summary_stats.loc['TotalAppraisedValue_percent'] = summary_stats.loc['TotalAppraisedValue_percent'].apply(
+    lambda x: f"{x * 100-100:.1f}%"
+)
+summary_stats.loc['TotalAppraisedValue'] = summary_stats.loc['TotalAppraisedValue'].apply(lambda x: f"${x:,.0f}")
+summary_stats.index = ['% Change in Appraisal Value', '2025 Appraised Value']
 
-st.dataframe(summary)
+# Build HTML table with centered values
+html_table = "<table style='width:100%; border-collapse:collapse; text-align:center;'>"
+
+# Header row
+html_table += "<thead><tr><th></th>"  # Empty top-left cell
+for col in summary_stats.columns:
+    html_table += f"<th>{col}</th>"
+html_table += "</tr></thead><tbody>"
+
+# Data rows
+for row_name, row_vals in summary_stats.iterrows():
+    html_table += f"<tr><td><strong>{row_name}</strong></td>"
+    for val in row_vals:
+        html_table += f"<td>{val}</td>"
+    html_table += "</tr>"
+
+html_table += "</tbody></table>"
+
+# Display
+st.markdown(html_table, unsafe_allow_html=True)
+
+
+
+
+
 
 
 st.markdown("""
-**What factors most correlate with the increase in value?**
+**What factors most correlate with the *increase* in value?**
 
-It turns out that factors like age or square footage don't seem to have a huge impact on the change in value. However, it is clear that changes in building values and land values have gone up at extremely different rates. The tax office finds that building values should increase by roughly 25%, while land values are closer to 100% (i.e. double). This also means that property owners who have a lot of land are likely to pay a higher share of property taxes in the future and that home owners on relatively small plots of land will likely pay less, relatively.
+Does Building Age or Square Footage matter? It turns out, not so much. The correlation in the change of value is rather small to non-existent.
+
+Did Land and Building Values change at the same rate? Not at all. It turns out that mean changes in building values and land values have gone up at extremely different rates. The tax office finds that building values should increase by roughly 43%, while land values are closer to 115% (i.e. more than double). This also means that property owners who have a lot of land are likely to pay a much higher share of property taxes in the future and that home owners on small plots of land will likely pay less, relatively.
 
 
 """)
+
+
+# Select and summarize
+columns_to_summarize = ['TotalAppraisedLandValue_percent', 'TotalAppraisedBuildingValue_percent']
+selected_data = merged_df_trim_filter01[columns_to_summarize]
+
+# Compute summary statistics
+summary_stats = selected_data.agg([
+    'mean',
+    lambda x: x.quantile(0.25),
+    'median',
+    lambda x: x.quantile(0.75)
+])
+
+# Rename index rows for clarity
+summary_stats.index = ['Mean', '25th Percentile', 'Median', '75th Percentile']
+
+# Transpose for display (rows = land/building, columns = summary stats)
+summary_stats = summary_stats.transpose()
+
+# Format as percent change (e.g., 1.25 → 25.0%)
+summary_stats = summary_stats.applymap(lambda x: f"{x * 100 - 100:.1f}%")
+
+# Rename row labels
+summary_stats.index = ['% Change in Land Value', '% Change in Building Value']
+
+# Build HTML table with centered values
+html_table = "<table style='width:100%; border-collapse:collapse; text-align:center;'>"
+
+# Header row
+html_table += "<thead><tr><th></th>"
+for col in summary_stats.columns:
+    html_table += f"<th>{col}</th>"
+html_table += "</tr></thead><tbody>"
+
+# Data rows
+for row_name, row_vals in summary_stats.iterrows():
+    html_table += f"<tr><td><strong>{row_name}</strong></td>"
+    for val in row_vals:
+        html_table += f"<td>{val}</td>"
+    html_table += "</tr>"
+
+html_table += "</tbody></table>"
+
+# Display
+st.markdown(html_table, unsafe_allow_html=True)
+
+
+st.markdown("""
+This also means that if we average change in property values by zip code, we should see larger increases from the outside of town.
+
+This is quite evident as the zip codes with less land (27514 and 27510) show a smaller increase than those farther outside of town."
+
+
+""")
+
+
+# 3. Plot
+fig2, ax = plt.subplots(figsize=(7,10))
+
+# Fill ZIPs with shading by appraisal value
+zip_map_proj.plot(
+    column="AppraisalValueChange",
+    cmap="OrRd",
+    linewidth=0,
+    ax=ax,
+    legend=False,
+    legend_kwds={"label": "Change in Appraised Value", "shrink": 0.6}
+)
+
+# ZIP code boundary lines
+zip_boundaries.plot(ax=ax, linewidth=1, edgecolor="black")
+
+# County boundary
+orange_proj.boundary.plot(ax=ax, linewidth=2, edgecolor="blue")
+
+# ZIP code labels
+for idx, row in zip_map_proj.iterrows():
+    if pd.notnull(row["AppraisalValueChange"]) and row.geometry.centroid.is_valid:
+        centroid = row.geometry.centroid
+        label = f"{row['ZIP']}\n{row['AppraisalValueChange']*100:,.1f}%"
+        ax.text(
+            centroid.x,
+            centroid.y,
+            label,
+            fontsize=8,
+            ha="center",
+            va="center",
+            color="black"
+        )
+
+# Clean layout
+ax.set_title("Change in Appraised Value by ZIP in Orange County, NC", fontsize=14)
+ax.axis("off")
+plt.tight_layout()
+st.pyplot(fig2)
 
 
 
@@ -155,8 +283,8 @@ It turns out that factors like age or square footage don't seem to have a huge i
 st.markdown("---")
 
 st.markdown("""
-To see how your property compares to the distribution of others in Orange County, enter your **PIN** below:
-""")
+Finally, if you want to see how your property compares to the distribution of others in Orange County, please go to the <a href="https://gis.orangecountync.gov/orangeNCGIS/default.htm">Orange County GIS website</a> to lookup the **PIN** for your property, and then enter then enter that Pin below:
+""", unsafe_allow_html=True)
 
 # Set up PIN lookup
 pin_lookup = merged_df_trim_filter01.set_index('ParcelID')

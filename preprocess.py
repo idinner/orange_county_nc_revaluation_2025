@@ -84,10 +84,10 @@ df = df[~df["Zip"].isin(excluded_zips)]
 
 # Calculate average appraisal value per ZIP
 zip_avg = (
-    df.groupby("Zip")["TotalAppraisedValue"]
+    df.groupby("Zip")[["TotalAppraisedValue","TotalAppraisedValue_2024"]]
     .median()
     .reset_index()
-    .rename(columns={"Zip": "ZIP", "TotalAppraisedValue": "AvgAppraisalValue"})
+    .rename(columns={"Zip": "ZIP", "TotalAppraisedValue": "AvgAppraisalValue","TotalAppraisedValue_2024":"AvgAppraisalValue_2024"})
 )
 zip_avg["ZIP"] = zip_avg["ZIP"].astype('int')
 
@@ -99,7 +99,7 @@ zip_shapes["ZIP"] = zip_shapes["ZCTA5CE10"].astype('int')
 
 # Merge your data with ZIP geometries
 zip_map = zip_shapes.merge(zip_avg, on="ZIP", how="right")
-zip_map = zip_map.dropna(subset=["geometry", "AvgAppraisalValue"])
+zip_map = zip_map.dropna(subset=["geometry", "AvgAppraisalValue","AvgAppraisalValue_2024"])
 
 # Load the county shapefile
 county_shapefile = '/Users/isaacdinner/Documents/orange_gis/tl_2023_us_county.shp'
