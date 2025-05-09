@@ -177,7 +177,7 @@ st.markdown(html_table, unsafe_allow_html=True)
 st.markdown("""
 **Do these numbers seem to make sense?**
 
-At a high level, the increase in residential real estate valuation estimated over the past 4 years from both <a href="https://www.redfin.com/city/3059/NC/Chapel-Hill/housing-market" target="_blank">Redfin</a> and <a href="https://www.zillow.com/home-values/17386/chapel-hill-nc/" target="_blank">Zillow</a> seem in line with the increase show in the tax revaluation.
+At a high level, the increase in residential real estate valuation estimated over the past 4 years from both <a href="https://www.redfin.com/city/3059/NC/Chapel-Hill/housing-market" target="_blank">Redfin</a> and <a href="https://www.zillow.com/home-values/17386/chapel-hill-nc/" target="_blank">Zillow</a> seem in line with the increase shown in the tax revaluation.
 
 """, unsafe_allow_html=True)
 
