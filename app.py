@@ -22,17 +22,25 @@ merged_df_trim_filter01 = load_data()
 st.title('🏡 Exploration of the Property Tax Revaluation in Orange County NC')
 
 st.markdown("""
-Recently, where I live in NC, there has been a lot of <a href="https://www.newsobserver.com/news/local/counties/orange-county/article300487814.html" target="_blank">talk about changes in the appraised value of homes that are used for calculating property taxes</a>.
+Recently, where I live in Orange County North Carolina, there has been a lot of <a href="https://www.newsobserver.com/news/local/counties/orange-county/article300487814.html" target="_blank">talk about changes in the appraised value of homes that are used for calculating property taxes</a>.
 
 I thought it would be interesting to see how residential property values have evolved from 2024 to 2025, and how they compare to each other in my county (Orange County NC). So, I used the publicly available Orange County GIS data to get the value of each property and compare them to others in the rest of the county.
 
 Below I'll provide some data that I found interesting, and at the bottom you can see how changes in property values compares to general distribution found in Orange County.
 """, unsafe_allow_html=True)
-
 st.markdown("---")
 
 st.markdown("""
-First, some basics on the data itself, and what is and is not included.
+**First, what is the revaluation process and why does it matter?**
+
+I'm not going to go into the full details, but the Orange County website does a <a href="https://www.orangecountync.gov/878/Revaluation" target="_blank">great job</a> of describing the process and answering a lot of questions (<a href="https://www.orangecountync.gov/FAQ.aspx?TID=40" target="_blank">and here is an additional FAQ</a>). From a simple perspective, it is the following:
+
+*"Revaluation is the process of updating all property tax assessments in Orange County to reflect market value as of a set date. For Orange County, this date is January 1, 2025. During this process, the tax office reassesses all real property, including land, buildings, and improvements. North Carolina law requires counties to revalue properties at least every eight years, Orange County follows a four-year revaluation cycle."*
+""", unsafe_allow_html=True)
+st.markdown("---")
+
+st.markdown("""
+Next up, some basics on the data itself, and what is and is not included in this analysis
 
 **Where is the data sourced?**
 
@@ -111,7 +119,7 @@ st.pyplot(fig)
 st.markdown("---")
 
 st.markdown("""
-**Next, does the data show that property valuations have really increased in the county, and if so, by how much?**
+**Next, does the data show that property valuations have increased in the county, and if so, by how much?**
 
 Yes. For this set of properties, appraised values increased by around 58% in 2025. However, there is also a lot of variation (see figures below). While almost no properties had lower value valuations, there were a rather larger number of properties that actually had valuations increase 2X, 5X and a few even by 10X.
 
@@ -166,6 +174,12 @@ html_table += "</tbody></table>"
 st.markdown(html_table, unsafe_allow_html=True)
 
 
+st.markdown("""
+**Do these numbers seem to make sense?**
+
+At a high level, the increase in residential real estate valuation estimated over the past 4 years from both <a href="https://www.redfin.com/city/3059/NC/Chapel-Hill/housing-market" target="_blank">Redfin</a> and <a href="https://www.zillow.com/home-values/17386/chapel-hill-nc/" target="_blank">Zillow</a> seem in line with the increase show in the tax revaluation.
+
+""", unsafe_allow_html=True)
 
 
 
@@ -174,9 +188,9 @@ st.markdown(html_table, unsafe_allow_html=True)
 st.markdown("""
 **What factors most correlate with the *increase* in value?**
 
-Does Building Age or Square Footage matter? It turns out, not so much. The correlation in the change of value is rather small to non-existent.
+*Do building characteristics such as Age or Square Footage matter?* It turns out, not so much. The correlation in the change of value is rather small to non-existent.
 
-Did Land and Building Values change at the same rate? Not at all. It turns out that mean changes in building values and land values have gone up at extremely different rates. The tax office finds that building values should increase by roughly 43%, while land values are closer to 115% (i.e. more than double). This also means that property owners who have a lot of land are likely to pay a much higher share of property taxes in the future and that home owners on small plots of land will likely pay less, relatively.
+*What about Land and Building Values? Did they change at the same rate?* No. This is where we see big differences. It turns out that mean changes in building values and land values have gone up at extremely different rates. The tax office finds that, for this sample, building values should increase by roughly 43%, while land values are closer to 115% (i.e. more than double). This also means that property owners who have a lot of land are likely to pay a much higher share of property taxes in the future and that home owners on small plots of land will likely pay less, relatively.
 
 
 """)
@@ -233,7 +247,6 @@ This also means that if we average change in property values by zip code, we sho
 
 This is quite evident as the zip codes with less land (27514 and 27510) show a smaller increase than those farther outside of town."
 
-
 """)
 
 
@@ -278,12 +291,10 @@ plt.tight_layout()
 st.pyplot(fig2)
 
 
-
-
 st.markdown("---")
 
 st.markdown("""
-Finally, if you want to see how your property compares to the distribution of others in Orange County, please go to the <a href="https://gis.orangecountync.gov/orangeNCGIS/default.htm">Orange County GIS website</a> to lookup the **PIN** for your property, and then enter then enter that Pin below:
+Of course, many individuals care about how changes in property valuation will compare to that of others in the county. If you want to see how any property compares to the distribution of others in Orange County, please go to the <a href="https://gis.orangecountync.gov/orangeNCGIS/default.htm">Orange County GIS website</a> to lookup the associated **PIN**, and then enter then enter that PIN below. This will show the change in that property's Total Valuation, Building Valuation and Land Valuation from 2024 to 2025.
 """, unsafe_allow_html=True)
 
 # Set up PIN lookup
@@ -326,7 +337,7 @@ filtered = filtered[(filtered >= lower) & (filtered <= upper)]
 
 # Plot
 filtered.dropna().hist(bins=100, edgecolor='black')
-plt.title('Trimmed Distribution of TotalAppraisedValue_percent')
+plt.title('Trimmed Distribution of the Change in Total Appraised Property Value')
 plt.xlabel('Value')
 plt.ylabel('Frequency')
 plt.tight_layout()
@@ -363,7 +374,7 @@ filtered = filtered[(filtered >= lower) & (filtered <= upper)]
 
 # Plot
 filtered.dropna().hist(bins=100, edgecolor='black')
-plt.title('Trimmed Distribution of TotalAppraisedBuildingValue_percent')
+plt.title('Trimmed Distribution of the Change in Total Appraised Building Value')
 plt.xlabel('Value')
 plt.ylabel('Frequency')
 plt.tight_layout()
@@ -399,7 +410,7 @@ filtered = filtered[(filtered >= lower) & (filtered <= upper)]
 
 # Plot
 filtered.dropna().hist(bins=100, edgecolor='black')
-plt.title('Trimmed Distribution of TotalAppraisedLandValue_percent')
+plt.title('Trimmed Distribution of the Change in Total Appraised Land Value')
 plt.xlabel('Value')
 plt.ylabel('Frequency')
 plt.tight_layout()
@@ -471,3 +482,9 @@ st.pyplot(fig3)
 
 # Footer
 st.markdown("---")
+
+st.markdown("""
+**Wrap up**
+
+Given the above, there are lots of potentially unanswered questions. One which still stands out to me is the "lumpiness" in the change in Land Valuation. While changes in building valuation seem to have a smooth curve, the changes in Land Valuation have many large jumps, most notably around 50%, 100% and a handful of other values. This suggests a rather coarse modeling.
+""", unsafe_allow_html=True)
